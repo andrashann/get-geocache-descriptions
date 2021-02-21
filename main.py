@@ -94,10 +94,14 @@ def get_caches(caches: str, json: bool = False):
     <style>
     .info { border: 1px solid black; display: block;}
     .gray { color: gray; }
+    a { text-decoration: none; }
     * { font-family: "Arial Narrow" !important; }
     </style></head><body>
     {% for c in caches %}
-    <h2>{{ c.dateid }}. {{ c.waypoint }} {{ c.nickname }}</h2>
+    <h2>
+    {{ c.dateid }}.{{ c.waypoint }} {{ c.nickname }} 
+    <a href="https://geocaching.hu/caches.geo?id={{ c.id }}">🔗</a>
+    </h2>
     <p>
     <span class="info">
     {{ c.lat_h }}°{{ c.lat_mmss }}';{{ c.long_h }}°{{ c.long_mmss }}' 
