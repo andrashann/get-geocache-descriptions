@@ -4,13 +4,11 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 
 import requests
-
 import re
-from bs4 import BeautifulSoup
 
 import jinja2
 
-from icon_mapping import icon_mapping
+from utils import replace_coord_tag, get_logs_for_cache
 
 
 tags_metadata = [
@@ -37,34 +35,9 @@ app = FastAPI(
 )
 
 
-def replace_coord_tag(coord_tag_string):
-    '''instead of the <coord ...> tag we found, return
-    a simple string with its useful content'''
-    soup = BeautifulSoup(coord_tag_string, 'lxml')
-    coord = soup.find_all("coord")[0]
-    params = []
-    # coords should have an icon. if so, add this icon to the output
-    icon = coord.get('icon')
-    # "icon" might be a Hungarian/English word instead of an ID, let's
-    # map it to the nubmer (which will be the file name)
-    if icon:
-        if icon.lower().strip() in icon_mapping:
-            icon = icon_mapping[icon.lower().strip()]
-        params += [
-            f'<img src="https://geocaching.hu/terkepek/ikonok/{icon}.png" style="position: relative; top: 2px;" width="14" height="12" border="0">']
-
-    params += [x for x in [
-        coord.get('description'),
-        coord.get('lat'),
-        coord.get('lon'),
-        coord.get('altitude')
-    ] if x is not None]
-    new_string = f"<b>[{' '.join(params)}]</b>"
-    return(new_string)
-
-
 @app.get("/caches/{caches}", tags=["caches"], response_class=HTMLResponse)
-def get_caches(caches: str, json: bool = False, two_col: bool = False):
+def get_caches(caches: str, json: bool = False, two_cols: bool = False,
+               n_logs: int = 0, ignore_default_logs: bool = True):
     '''Egy vesszővel elválasztott azonosítólista (pl. 237,361,858) alapján visszaadja
     a ládainformációkat. Alapbeállításként egy HTML választ ad, de ha ?json=true, a
     nyers adatokat kapjuk meg egy JSON objektumban.
@@ -111,10 +84,16 @@ def get_caches(caches: str, json: bool = False, two_col: bool = False):
             sorted_data[-1]['fulldesc']
         )
 
+        # if we want to get logs (n_logs > 0)
+        if n_logs > 0:
+            logs = get_logs_for_cache(
+                sorted_data[-1]['id'], n_logs, ignore_default_logs)
+            sorted_data[-1]['logs'] = logs
+
     if json:
         return JSONResponse(content=sorted_data)
 
     with open('template.html') as f:
         template = jinja2.Template(f.read())
 
-    return(template.render(caches=sorted_data, two_col=two_col))
+    return(template.render(caches=sorted_data, two_cols=two_cols))

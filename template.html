@@ -34,7 +34,7 @@
         background: none !important
       }
 
-      /* {% if two_col %} /* */
+      /* {% if two_cols %} /* */
       body {
         column-count: 2;
         -webkit-column-count: 2;
@@ -61,6 +61,15 @@
     </span>
     {{ c.fulldesc }}
   </p>
+  {% if c.logs %}
+  <hr />
+  {% for l in c.logs %}
+  <b>{{ l.date[:10] }} {{ l.member -}}
+    {% if l.userphone %} ({{ l.userphone -}}){% endif %}:
+  </b>
+  {{ l.notes }}<br />
+  {% endfor %}
+  {% endif %}
   {% endfor %}
 </body>
 
