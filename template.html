@@ -1,0 +1,67 @@
+<html>
+
+<head>
+  <style>
+    .info {
+      border: 1px solid black;
+      display: block;
+    }
+
+    .gray {
+      color: gray;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    a,
+    a:hover,
+    a:visited {
+      color: blue;
+    }
+
+    * {
+      font-family: "Arial Narrow" !important;
+    }
+
+    @media print {
+      .cachelink {
+        display: none
+      }
+
+      * {
+        background: none !important
+      }
+
+      /* {% if two_col %} /* */
+      body {
+        column-count: 2;
+        -webkit-column-count: 2;
+        -moz-column-count: 2;
+      }
+
+      /* {% endif %} /* */
+    }
+  </style>
+</head>
+
+<body>
+  {% for c in caches %}
+  <h2>
+    {{ c.dateid }}.{{ c.waypoint }} {{ c.nickname }}
+    <a href="https://geocaching.hu/caches.geo?id={{ c.id }}" class="cachelink">🔗</a>
+  </h2>
+  <p>
+    <span class="info">
+      {{ c.lat_h }}°{{ c.lat_mmss }}';{{ c.long_h }}°{{ c.long_mmss }}'
+      <span class="gray">({{ c.lat }}°;{{ c.lon }}°)</span>
+      {{ c.altitude }}m
+      {{ c.member }} {{ c.userphone }} <br />
+    </span>
+    {{ c.fulldesc }}
+  </p>
+  {% endfor %}
+</body>
+
+</html>

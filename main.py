@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup
 
 import jinja2
 
+from icon_mapping import icon_mapping
+
 
 tags_metadata = [
     {
@@ -21,12 +23,12 @@ tags_metadata = [
 
 app = FastAPI(
     title="Geocaching.hu ládaleírások / Geocaching.hu cache descriptions",
-    description='''Egy egyszerű API, ami a ládák URL-jében található azonosítók alapján 
+    description='''Egy egyszerű API, ami a ládák URL-jében található azonosítók alapján
   egy minimálisan formattált ládaleírás-gyűjteményt ad vissza.
 
   A simple API that returns geocache descriptions from geocaching.hu with minimal
   formatting based on the ID found in the URL of the caches.
-  
+
   [https://github.com/andrashann/get-geocache-descriptions](https://github.com/andrashann/get-geocache-descriptions)
   ''',
     version="0.0.1",
@@ -40,7 +42,18 @@ def replace_coord_tag(coord_tag_string):
     a simple string with its useful content'''
     soup = BeautifulSoup(coord_tag_string, 'lxml')
     coord = soup.find_all("coord")[0]
-    params = [x for x in [
+    params = []
+    # coords should have an icon. if so, add this icon to the output
+    icon = coord.get('icon')
+    # "icon" might be a Hungarian/English word instead of an ID, let's
+    # map it to the nubmer (which will be the file name)
+    if icon:
+        if icon.lower().strip() in icon_mapping:
+            icon = icon_mapping[icon.lower().strip()]
+        params += [
+            f'<img src="https://geocaching.hu/terkepek/ikonok/{icon}.png" style="position: relative; top: 2px;" width="14" height="12" border="0">']
+
+    params += [x for x in [
         coord.get('description'),
         coord.get('lat'),
         coord.get('lon'),
@@ -51,7 +64,7 @@ def replace_coord_tag(coord_tag_string):
 
 
 @app.get("/caches/{caches}", tags=["caches"], response_class=HTMLResponse)
-def get_caches(caches: str, json: bool = False):
+def get_caches(caches: str, json: bool = False, two_col: bool = False):
     '''Egy vesszővel elválasztott azonosítólista (pl. 237,361,858) alapján visszaadja
     a ládainformációkat. Alapbeállításként egy HTML választ ad, de ha ?json=true, a
     nyers adatokat kapjuk meg egy JSON objektumban.
@@ -76,8 +89,16 @@ def get_caches(caches: str, json: bool = False):
     for id in caches.split(','):
         # get the cache with the given id
         sorted_data.append([x for x in data if x['id'] == id][0])
+
+        # replace line breaks with actual line breaks that will render in the
+        # html output
         sorted_data[-1]['fulldesc'] = sorted_data[-1]['fulldesc'].replace(
             '\n\n', '\n').replace('\n', '<br/>\n')
+
+        # replace relative links of icons that are used on the website with
+        # absolute links
+        sorted_data[-1]['fulldesc'] = sorted_data[-1]['fulldesc'].replace(
+            r'/terkepek/ikonok/', r'https://geocaching.hu/terkepek/ikonok/')
 
         # we have to remove the custom '<coord ...>' tags which carry useful
         # information but they break the html output.
@@ -93,29 +114,7 @@ def get_caches(caches: str, json: bool = False):
     if json:
         return JSONResponse(content=sorted_data)
 
-    template_html = '''<html><head>
-    <style>
-    .info { border: 1px solid black; display: block;}
-    .gray { color: gray; }
-    a { text-decoration: none; }
-    * { font-family: "Arial Narrow" !important; }
-    </style></head><body>
-    {% for c in caches %}
-    <h2>
-    {{ c.dateid }}.{{ c.waypoint }} {{ c.nickname }} 
-    <a href="https://geocaching.hu/caches.geo?id={{ c.id }}">🔗</a>
-    </h2>
-    <p>
-    <span class="info">
-    {{ c.lat_h }}°{{ c.lat_mmss }}';{{ c.long_h }}°{{ c.long_mmss }}' 
-    <span class="gray">({{ c.lat }}°;{{ c.lon }}°)</span>
-    {{ c.altitude }}m
-    {{ c.member }} {{ c.userphone }} <br />
-    </span>
-    {{ c.fulldesc }}
-    </p>
-    {% endfor %}
-    </body></html>'''
+    with open('template.html') as f:
+        template = jinja2.Template(f.read())
 
-    template = jinja2.Template(template_html)
-    return(template.render(caches=sorted_data))
+    return(template.render(caches=sorted_data, two_col=two_col))
