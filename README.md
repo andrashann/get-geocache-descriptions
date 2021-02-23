@@ -1,7 +1,7 @@
 # get-geocache-descriptions
 A very basic api to download geocache data and descriptions from [geocaching.hu](https://geocaching.hu) (for printing, storing as one html on a phone, etc.)
 
-Check it out live: [https://geolada-leirasok.herokuapp.com](). You can also check out [this sample response](https://geolada-leirasok.herokuapp.com/caches/70).
+Check it out live: [https://geolada-leirasok.herokuapp.com](https://geolada-leirasok.herokuapp.com). You can also check out [this sample response](https://geolada-leirasok.herokuapp.com/caches/70).
 
 ## Why?
 

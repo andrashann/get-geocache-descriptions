@@ -27,7 +27,7 @@ app = FastAPI(
   A simple API that returns geocache descriptions from geocaching.hu with minimal
   formatting based on the ID found in the URL of the caches.
   
-  [https://github.com/andrashann/get-geocache-descriptions]()
+  [https://github.com/andrashann/get-geocache-descriptions](https://github.com/andrashann/get-geocache-descriptions)
   ''',
     version="0.0.1",
     docs_url="/", redoc_url=None,
