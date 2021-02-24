@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <title>Geoládák nyomtatáshoz</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <p style="text-align:right"><a href="index.html">English version</a></p>
+    <h1 class="mt-4">Geoládák adatainak letöltése nyomtatáshoz</h1>
+    <p class="text-muted">Ez a honlap arra szolgál, hogy egyszerűen ki tudd gyűjteni bizonyos geoládák leírását és
+      legutóbbi logjait a <a href="https://geocaching.hu">geocaching.hu</a>-ról, hogy ki tudd ezeket nyomtatni.</p>
+
+    <form action="https://geolada-leirasok.herokuapp.com/caches/" method="get"
+      onsubmit="this.action = this.action + this.caches.value; this.submit();">
+      <div class="form-group row">
+        <label for="caches" class="col-4 col-form-label">Geoládák</label>
+        <div class="col-8">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <div class="input-group-text">
+                <i class="fa fa-archive"></i>
+              </div>
+            </div>
+            <input id="caches" name="caches" type="text" aria-describedby="cachesHelpBlock" required="required"
+              class="form-control" value="70,53,38,40">
+          </div>
+          <span id="cachesHelpBlock" class="form-text text-muted">Vesszővel elválasztott azonosítólista</span>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="n_logs" class="col-4 col-form-label">Letöltendő logok száma</label>
+        <div class="col-8">
+          <input id="n_logs" name="n_logs" placeholder="0" type="text" required="required" class="form-control"
+            value="10">
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-4">Alapértelmezett logok kihagyása</label>
+        <div class="col-8">
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="ignore_default_logs" id="ignore_default_logs_0" type="radio"
+              aria-describedby="ignore_default_logsHelpBlock" required="required" class="custom-control-input"
+              value="false">
+            <label for="ignore_default_logs_0" class="custom-control-label">Nem</label>
+          </div>
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="ignore_default_logs" id="ignore_default_logs_1" type="radio"
+              aria-describedby="ignore_default_logsHelpBlock" required="required" class="custom-control-input"
+              value="true" checked>
+            <label for="ignore_default_logs_1" class="custom-control-label">Igen</label>
+          </div>
+          <span id="ignore_default_logsHelpBlock" class="form-text text-muted">Sok cacher nem változtatja meg az appok
+            alapértelmezett logszövegét, ezek a logok nem sok hasznos információt tartalmaznak.</span>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-4">Két hasáb?</label>
+        <div class="col-8">
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="two_cols" id="two_cols_0" type="radio" class="custom-control-input" value="false"
+              aria-describedby="two_colsHelpBlock" checked>
+            <label for="two_cols_0" class="custom-control-label">Nem</label>
+          </div>
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="two_cols" id="two_cols_1" type="radio" class="custom-control-input" value="true"
+              aria-describedby="two_colsHelpBlock">
+            <label for="two_cols_1" class="custom-control-label">Igen</label>
+          </div>
+          <span id="two_colsHelpBlock" class="form-text text-muted">Szeretnéd-e, hogy nyomtatáskor két hasábban jelenjen
+            meg a szöveg?</span>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-4">Csak az adatok</label>
+        <div class="col-8">
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="json" id="json_0" type="radio" class="custom-control-input" value="false" checked>
+            <label for="json_0" class="custom-control-label">Nem</label>
+          </div>
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="json" id="json_1" type="radio" class="custom-control-input" value="true">
+            <label for="json_1" class="custom-control-label">Igen</label>
+          </div>
+          <span id="jsonHelpBlock" class="form-text text-muted">Szeretnéd-e csak a nyers adatokat visszakapni mindenféle
+            formázás nélkül?</span>
+
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="offset-4 col-8">
+          <button name="submit" type="submit" class="btn btn-primary">Elküld</button>
+        </div>
+      </div>
+    </form>
+    <p class="text-muted mt-5"><small>&copy; András Hann 2021 – released under the MIT license. <a
+          href="https://geolada-leirasok.herokuapp.com/">API</a>, <a
+          href="https://github.com/andrashann/get-geocache-descriptions">GitHub repo</a>. <br /> Thanks to <a
+          href="https://bootstrapformbuilder.com/">BootsrapFormBuilder.com</a>.</small></p>
+  </div>
+</body>
+
+</html>

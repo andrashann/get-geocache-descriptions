@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <title>Geoládák nyomtatáshoz</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <p style="text-align:right"><a href="index_hu.html">magyar változat</a></p>
+    <h1 class="mt-4">Download Hungarian geocache data for printing</h1>
+    <p class="text-muted">This website is a tool to download geocache descriptions and latest logs for printing from <a
+        href="https://geocaching.hu">geocaching.hu</a> (Note: this site is completely independent of <a
+        href="https://geocaching.com">geocaching.com</a>; it has a different (but somewhat overlapping) set of caches
+      and all the content is in Hungarian).</p>
+
+    <form action="https://geolada-leirasok.herokuapp.com/caches/" method="get"
+      onsubmit="this.action = this.action + this.caches.value; this.submit();">
+      <div class="form-group row">
+        <label for="caches" class="col-4 col-form-label">Caches</label>
+        <div class="col-8">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <div class="input-group-text">
+                <i class="fa fa-archive"></i>
+              </div>
+            </div>
+            <input id="caches" name="caches" type="text" aria-describedby="cachesHelpBlock" required="required"
+              class="form-control" value="70,53,38,40">
+          </div>
+          <span id="cachesHelpBlock" class="form-text text-muted">Comma separated list of cache IDs</span>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="n_logs" class="col-4 col-form-label">Number of logs to download</label>
+        <div class="col-8">
+          <input id="n_logs" name="n_logs" placeholder="0" type="text" required="required" class="form-control"
+            value="10">
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-4">Ignore default logs</label>
+        <div class="col-8">
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="ignore_default_logs" id="ignore_default_logs_0" type="radio"
+              aria-describedby="ignore_default_logsHelpBlock" required="required" class="custom-control-input"
+              value="false">
+            <label for="ignore_default_logs_0" class="custom-control-label">No</label>
+          </div>
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="ignore_default_logs" id="ignore_default_logs_1" type="radio"
+              aria-describedby="ignore_default_logsHelpBlock" required="required" class="custom-control-input"
+              value="true" checked>
+            <label for="ignore_default_logs_1" class="custom-control-label">Yes</label>
+          </div>
+          <span id="ignore_default_logsHelpBlock" class="form-text text-muted">A lot of cachers keep the default text of
+            the logs when they submit them via apps; these logs are not very informative.</span>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-4">Two columns?</label>
+        <div class="col-8">
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="two_cols" id="two_cols_0" type="radio" class="custom-control-input" value="false"
+              aria-describedby="two_colsHelpBlock" checked>
+            <label for="two_cols_0" class="custom-control-label">No</label>
+          </div>
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="two_cols" id="two_cols_1" type="radio" class="custom-control-input" value="true"
+              aria-describedby="two_colsHelpBlock">
+            <label for="two_cols_1" class="custom-control-label">Yes</label>
+          </div>
+          <span id="two_colsHelpBlock" class="form-text text-muted">Do you want the text to be in two columns when
+            printed?</span>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-4">Data only</label>
+        <div class="col-8">
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="json" id="json_0" type="radio" class="custom-control-input" value="false" checked>
+            <label for="json_0" class="custom-control-label">No</label>
+          </div>
+          <div class="custom-control custom-radio custom-control-inline">
+            <input name="json" id="json_1" type="radio" class="custom-control-input" value="true">
+            <label for="json_1" class="custom-control-label">Yes</label>
+          </div>
+          <span id="jsonHelpBlock" class="form-text text-muted">Do you want to get just the raw data without any
+            formatting?</span>
+
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="offset-4 col-8">
+          <button name="submit" type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </div>
+    </form>
+    <p class="text-muted mt-5"><small>&copy; András Hann 2021 – released under the MIT license. <a
+          href="https://geolada-leirasok.herokuapp.com/">API</a>, <a
+          href="https://github.com/andrashann/get-geocache-descriptions">GitHub repo</a>. <br /> Köszönet a <a
+          href="https://bootstrapformbuilder.com/">BootsrapFormBuilder.com</a>-nak.</small></p>
+  </div>
+</body>
+
+</html>
