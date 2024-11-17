@@ -6,3 +6,4 @@ requests==2.25.1
 jinja2>=2.11.3
 pandas>=2.2.0
 premailer>=3.10.0
+matplotlib>=3.8.0
