@@ -147,7 +147,7 @@ def get_user_calendar(user: str):
         .replace('</body></html>','')
     )
 
-    return('document.write(`<div id="user_cal">' + html_table + '</div>`);')
+    return('document.write(`<div id="user_cal"><h3>Megtalálások hónap-nap szerint</h3>' + html_table + '</div>`);')
     
 
 
