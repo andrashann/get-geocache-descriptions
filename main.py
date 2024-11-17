@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
 import requests
 import re
@@ -10,6 +10,8 @@ import jinja2
 
 from utils import replace_coord_tag, get_logs_for_cache
 
+import pandas as pd
+import premailer
 
 tags_metadata = [
     {
@@ -24,12 +26,17 @@ app = FastAPI(
     description='''Egy egyszerű API, ami a ládák URL-jében található azonosítók alapján
   egy minimálisan formattált ládaleírás-gyűjteményt ad vissza.
 
+  További funkciója, hogy egy naptárat ad vissza egy felhasználó megtalálásairól, ami
+  beágyaztható a profiloldalba.
+
   A simple API that returns geocache descriptions from geocaching.hu with minimal
   formatting based on the ID found in the URL of the caches.
 
+  It can also return a calendar of a user's finds that can be embedded in a profile page.
+
   [https://github.com/andrashann/get-geocache-descriptions](https://github.com/andrashann/get-geocache-descriptions)
   ''',
-    version="0.0.1",
+    version="0.0.2",
     docs_url="/", redoc_url=None,
     openapi_tags=tags_metadata
 )
@@ -97,3 +104,50 @@ def get_caches(caches: str, json: bool = False, two_cols: bool = False,
         template = jinja2.Template(f.read())
 
     return(template.render(caches=sorted_data, two_cols=two_cols))
+
+@app.get("/usercalendar/{user}", tags=["user"], response_class=PlainTextResponse)
+def get_user_calendar(user: str):
+    '''Egy felhasználónév alapján visszaadja a felhasználó ládáinak naptárát.
+    Returns the calendar of a user's caches based on the username.'''
+
+    headers = {'accept': 'application/json'}
+
+    # api documentation: https://api.geocaching.hu/
+    r = requests.get(f'https://api.geocaching.hu/logsbyuser?userid={user}&logtype=1&fields=waypoint,date')
+    data = r.json()
+
+    pd.set_option('display.max_columns', 32)
+    finds = pd.DataFrame([{'month': x['date'][5:7], 'day': x['date'][8:10], 'counter': 1} for x in data])
+    
+    calendar = pd.pivot_table(finds,
+             columns='day',
+             index='month',
+             values='counter',
+             aggfunc='sum',
+             fill_value=0,
+             dropna=False)
+
+    for d in [("31", "02"), ("30", "02"), ("31", "04"), ("31", "06"), ("31", "09"), ("31", "11")]:
+        calendar[d[0]][d[1]] = pd.NA
+
+    calendar.columns.names = ['nap']
+    calendar.index.names = ['hónap']
+
+    html_table = (
+        premailer.transform(
+            (calendar.style
+            .background_gradient(cmap = 'Greys')
+            .highlight_min(color='#ea670c')
+            .format("{:.0f}", na_rep="X")
+            .highlight_null(color="white")
+            ).to_html()
+        )
+        .replace('\n','')
+        .replace('<html><head></head><body>','')
+        .replace('</body></html>','')
+    )
+
+    return('document.write(`<div id="user_cal">' + html_table + '</div>`);')
+    
+
+
