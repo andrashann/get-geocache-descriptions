@@ -11,6 +11,7 @@ import jinja2
 from utils import replace_coord_tag, get_logs_for_cache
 
 import pandas as pd
+import numpy as np
 import premailer
 
 tags_metadata = [
@@ -128,18 +129,44 @@ def get_user_calendar(user: str):
              dropna=False)
 
     for d in [("31", "02"), ("30", "02"), ("31", "04"), ("31", "06"), ("31", "09"), ("31", "11")]:
-        calendar[d[0]][d[1]] = pd.NA
+        calendar.loc[d[1], d[0]] = pd.NA
 
     calendar.columns.names = ['nap']
     calendar.index.names = ['hónap']
 
+    cal2 = calendar.copy()
+
+    cal2['✓'] = calendar.apply(lambda x: (x[x.notna()] != 0).sum(), axis=1)
+    cal2['%'] = calendar.apply(lambda x: (x[x.notna()] != 0).sum() / x.notna().sum(), axis=1)
+    tick_sum = cal2['✓'].sum()
+    cal2.loc['Σ', '✓'] = tick_sum
+    cal2.loc['Σ', '%'] = tick_sum / 366
+
     html_table = (
         premailer.transform(
-            (calendar.style
-            .background_gradient(cmap = 'Greys')
-            .highlight_min(color='#ea670c')
-            .format("{:.0f}", na_rep="X")
+            (cal2.style
+            .background_gradient(
+                cmap = 'Greys', 
+                vmin=0, 
+                axis=None, 
+                subset=pd.IndexSlice[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[~cal2.columns.isin(['%', '✓'])]],
+                gmap = cal2.loc[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[~cal2.columns.isin(['%', '✓'])]].apply(np.sqrt)
+            )
+            #.highlight_min(props='color: #ea670c; font-weight: bold', subset=pd.IndexSlice[:,cal2.columns[~cal2.columns.isin(['%', '✓'])]])
+            .map(func = lambda x: 'background-color: faede3; color: #ea670c; font-weight: bold' if x == 0 else '', subset=pd.IndexSlice[:,cal2.columns[~cal2.columns.isin(['%', '✓'])]])
+            .background_gradient(cmap = 'Greens', vmin=0, subset=pd.IndexSlice[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[cal2.columns.isin(['%', '✓'])]])
+            .background_gradient(cmap = 'Greens', vmin=0, vmax=366, subset=pd.IndexSlice[['Σ'],['✓']])
+            .background_gradient(cmap = 'Greens', vmin=0, vmax=1, subset=pd.IndexSlice[['Σ'],['%']])
+            .format(
+                "{:.0f}", 
+                na_rep="",
+                subset=pd.IndexSlice[
+                    :,cal2.columns[~cal2.columns.isin(['%'])]
+                ]
+            )
+            .format("{:,.0%}", subset=pd.IndexSlice[:,cal2.columns[cal2.columns == '%']])
             .highlight_null(color="white")
+            .set_table_styles([{'selector': '.data', 'props': [('text-align', 'center')]}])
             ).to_html()
         )
         .replace('\n','')
