@@ -146,14 +146,14 @@ def get_user_calendar(user: str):
         premailer.transform(
             (cal2.style
             .background_gradient(
-                cmap = 'Greys', 
+                cmap = 'magma_r', 
                 vmin=0, 
                 axis=None, 
                 subset=pd.IndexSlice[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[~cal2.columns.isin(['%', '✓'])]],
                 gmap = cal2.loc[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[~cal2.columns.isin(['%', '✓'])]].apply(np.sqrt)
             )
             #.highlight_min(props='color: #ea670c; font-weight: bold', subset=pd.IndexSlice[:,cal2.columns[~cal2.columns.isin(['%', '✓'])]])
-            .map(func = lambda x: 'background-color: faede3; color: #ea670c; font-weight: bold' if x == 0 else '', subset=pd.IndexSlice[:,cal2.columns[~cal2.columns.isin(['%', '✓'])]])
+            .map(func = lambda x: 'background-color: #faede3; color: #ea670c; font-weight: bold' if x == 0 else '', subset=pd.IndexSlice[:,cal2.columns[~cal2.columns.isin(['%', '✓'])]])
             .background_gradient(cmap = 'Greens', vmin=0, subset=pd.IndexSlice[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[cal2.columns.isin(['%', '✓'])]])
             .background_gradient(cmap = 'Greens', vmin=0, vmax=366, subset=pd.IndexSlice[['Σ'],['✓']])
             .background_gradient(cmap = 'Greens', vmin=0, vmax=1, subset=pd.IndexSlice[['Σ'],['%']])
