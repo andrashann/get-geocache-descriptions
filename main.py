@@ -113,6 +113,8 @@ def get_user_calendar(user: str):
 
     headers = {'accept': 'application/json'}
 
+    user=user.replace('{','').replace('}','').replace('%7B','').replace('%7D','')
+
     # api documentation: https://api.geocaching.hu/
     r = requests.get(f'https://api.geocaching.hu/logsbyuser?userid={user}&logtype=1&fields=waypoint,date')
     data = r.json()
