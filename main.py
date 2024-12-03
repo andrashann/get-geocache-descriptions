@@ -125,8 +125,17 @@ def get_user_calendar(user: str):
     data = r.json()
 
     pd.set_option('display.max_columns', 32)
-    finds = pd.DataFrame([{'month': x['date'][5:7], 'day': x['date'][8:10], 'counter': 1} for x in data])
-    
+    try:
+        if len(data) > 0:
+            finds = pd.DataFrame([{'month': x['date'][5:7], 'day': x['date'][8:10], 'counter': 1} for x in data])
+        else:
+            return('document.write(`<div id="user_cal"><h3>Megtalálások hónap-nap szerint</h3>'+
+                   '<p>Ennek a felhasználónak még nincsenek megtalálásai.</p>`);')
+    except TypeError:
+        return('document.write(`<div id="user_cal"><h3>Megtalálások hónap-nap szerint</h3>'+
+               '<p>Nem találtunk megtalálásokat a felhasználóhoz. Biztos, hogy jó kódot másoltál be?</p>'+
+               '<p><b>&lt;script src="https://geolada-leirasok.herokuapp.com/usercalendar/`+window.location.href.split("=").slice(-1)[0]+`"&gt;&lt;/script&gt;</b></p>`);')
+
     calendar = pd.pivot_table(finds,
              columns='day',
              index='month',
