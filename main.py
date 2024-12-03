@@ -42,6 +42,20 @@ app = FastAPI(
     openapi_tags=tags_metadata
 )
 
+def send_plausible_event(url='', error=None):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 OPR/71.0.3770.284',
+        'X-Forwarded-For': '127.0.0.1',
+        'Content-Type': 'application/json',
+    }
+
+    json_data = {
+        'name': 'pageview',
+        'url': f'https://geolada-leirasok.herokuapp.com{url}',
+        'domain': 'geolada-leirasok.herokuapp.com',
+        'props': {'error': error}
+    }
+    requests.post('https://plausible.io/api/event', headers=headers, json=json_data)
 
 @app.get("/caches/{caches}", tags=["caches"], response_class=HTMLResponse)
 def get_caches(caches: str, json: bool = False, two_cols: bool = False,
@@ -113,68 +127,84 @@ def get_user_calendar(user: str):
 
     headers = {'accept': 'application/json'}
 
+    original_user = user
+    error = None
+
+    # remove curly braces from the username
     user=user.replace('{','').replace('}','').replace('%7B','').replace('%7D','')
 
-    # api documentation: https://api.geocaching.hu/
-    r = requests.get(f'https://api.geocaching.hu/logsbyuser?userid={user}&logtype=1&fields=waypoint,date')
-    data = r.json()
+    try: 
+        # api documentation: https://api.geocaching.hu/
+        r = requests.get(f'https://api.geocaching.hu/logsbyuser?userid={user}&logtype=1&fields=waypoint,date')
+        data = r.json()
 
-    pd.set_option('display.max_columns', 32)
-    finds = pd.DataFrame([{'month': x['date'][5:7], 'day': x['date'][8:10], 'counter': 1} for x in data])
+        pd.set_option('display.max_columns', 32)
+        finds = pd.DataFrame([{'month': x['date'][5:7], 'day': x['date'][8:10], 'counter': 1} for x in data])
+    except:
+        send_plausible_event(f'/usercalendar/{original_user}','gc_api_error')
+        return('document.write(`Hiba történt a naptár létrehozása közben.`);')
+
+    try:
+        calendar = pd.pivot_table(finds,
+                columns='day',
+                index='month',
+                values='counter',
+                aggfunc='sum',
+                fill_value=0,
+                dropna=False)
+
+        for d in [("31", "02"), ("30", "02"), ("31", "04"), ("31", "06"), ("31", "09"), ("31", "11")]:
+            calendar.loc[d[1], d[0]] = pd.NA
+
+        calendar.columns.names = ['nap']
+        calendar.index.names = ['hónap']
+    except:
+        send_plausible_event(f'/usercalendar/{original_user}','data_pivot_error')
+        return('document.write(`Hiba történt a naptár létrehozása közben.`);')
     
-    calendar = pd.pivot_table(finds,
-             columns='day',
-             index='month',
-             values='counter',
-             aggfunc='sum',
-             fill_value=0,
-             dropna=False)
+    try:
+        cal2 = calendar.copy()
 
-    for d in [("31", "02"), ("30", "02"), ("31", "04"), ("31", "06"), ("31", "09"), ("31", "11")]:
-        calendar.loc[d[1], d[0]] = pd.NA
+        cal2['✓'] = calendar.apply(lambda x: (x[x.notna()] != 0).sum(), axis=1)
+        cal2['%'] = calendar.apply(lambda x: (x[x.notna()] != 0).sum() / x.notna().sum(), axis=1)
+        tick_sum = cal2['✓'].sum()
+        cal2.loc['Σ', '✓'] = tick_sum
+        cal2.loc['Σ', '%'] = tick_sum / 366
 
-    calendar.columns.names = ['nap']
-    calendar.index.names = ['hónap']
-
-    cal2 = calendar.copy()
-
-    cal2['✓'] = calendar.apply(lambda x: (x[x.notna()] != 0).sum(), axis=1)
-    cal2['%'] = calendar.apply(lambda x: (x[x.notna()] != 0).sum() / x.notna().sum(), axis=1)
-    tick_sum = cal2['✓'].sum()
-    cal2.loc['Σ', '✓'] = tick_sum
-    cal2.loc['Σ', '%'] = tick_sum / 366
-
-    html_table = (
-        premailer.transform(
-            (cal2.style
-            .background_gradient(
-                cmap = 'magma_r', 
-                vmin=0, 
-                axis=None, 
-                subset=pd.IndexSlice[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[~cal2.columns.isin(['%', '✓'])]],
-                gmap = cal2.loc[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[~cal2.columns.isin(['%', '✓'])]].apply(np.sqrt)
+        html_table = (
+            premailer.transform(
+                (cal2.style
+                .background_gradient(
+                    cmap = 'magma_r', 
+                    vmin=0, 
+                    axis=None, 
+                    subset=pd.IndexSlice[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[~cal2.columns.isin(['%', '✓'])]],
+                    gmap = cal2.loc[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[~cal2.columns.isin(['%', '✓'])]].apply(np.sqrt)
+                )
+                #.highlight_min(props='color: #ea670c; font-weight: bold', subset=pd.IndexSlice[:,cal2.columns[~cal2.columns.isin(['%', '✓'])]])
+                .map(func = lambda x: 'background-color: #faede3; color: #ea670c; font-weight: bold' if x == 0 else '', subset=pd.IndexSlice[:,cal2.columns[~cal2.columns.isin(['%', '✓'])]])
+                .background_gradient(cmap = 'Greens', vmin=0, subset=pd.IndexSlice[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[cal2.columns.isin(['%', '✓'])]])
+                .background_gradient(cmap = 'Greens', vmin=0, vmax=366, subset=pd.IndexSlice[['Σ'],['✓']])
+                .background_gradient(cmap = 'Greens', vmin=0, vmax=1, subset=pd.IndexSlice[['Σ'],['%']])
+                .format(
+                    "{:.0f}", 
+                    na_rep="",
+                    subset=pd.IndexSlice[
+                        :,cal2.columns[~cal2.columns.isin(['%'])]
+                    ]
+                )
+                .format("{:,.0%}", subset=pd.IndexSlice[:,cal2.columns[cal2.columns == '%']])
+                .highlight_null(color="white")
+                .set_table_styles([{'selector': '.data', 'props': [('text-align', 'center')]}])
+                ).to_html()
             )
-            #.highlight_min(props='color: #ea670c; font-weight: bold', subset=pd.IndexSlice[:,cal2.columns[~cal2.columns.isin(['%', '✓'])]])
-            .map(func = lambda x: 'background-color: #faede3; color: #ea670c; font-weight: bold' if x == 0 else '', subset=pd.IndexSlice[:,cal2.columns[~cal2.columns.isin(['%', '✓'])]])
-            .background_gradient(cmap = 'Greens', vmin=0, subset=pd.IndexSlice[cal2.index[~cal2.index.isin(['Σ'])],cal2.columns[cal2.columns.isin(['%', '✓'])]])
-            .background_gradient(cmap = 'Greens', vmin=0, vmax=366, subset=pd.IndexSlice[['Σ'],['✓']])
-            .background_gradient(cmap = 'Greens', vmin=0, vmax=1, subset=pd.IndexSlice[['Σ'],['%']])
-            .format(
-                "{:.0f}", 
-                na_rep="",
-                subset=pd.IndexSlice[
-                    :,cal2.columns[~cal2.columns.isin(['%'])]
-                ]
-            )
-            .format("{:,.0%}", subset=pd.IndexSlice[:,cal2.columns[cal2.columns == '%']])
-            .highlight_null(color="white")
-            .set_table_styles([{'selector': '.data', 'props': [('text-align', 'center')]}])
-            ).to_html()
+            .replace('\n','')
+            .replace('<html><head></head><body>','')
+            .replace('</body></html>','')
         )
-        .replace('\n','')
-        .replace('<html><head></head><body>','')
-        .replace('</body></html>','')
-    )
+    except:
+        send_plausible_event(f'/usercalendar/{original_user}','html_table_error')
+        return('document.write(`Hiba történt a naptár létrehozása közben.`);')
 
     return('document.write(`<div id="user_cal"><h3>Megtalálások hónap-nap szerint</h3>' + html_table + '</div>`);')
     
