@@ -106,6 +106,11 @@ def get_caches(caches: str, json: bool = False, two_cols: bool = False,
 
     return(template.render(caches=sorted_data, two_cols=two_cols))
 
+@app.get("/robots.txt" , response_class=PlainTextResponse)
+def get_robots():
+    '''A robots.txt fájl tartalma / Content of the robots.txt file'''
+    return('User-agent: *\nDisallow: /usercalendar/ \nDisallow: /caches/')
+
 @app.get("/usercalendar/{user}", tags=["user"], response_class=PlainTextResponse)
 def get_user_calendar(user: str):
     '''Egy felhasználónév alapján visszaadja a felhasználó ládáinak naptárát.
