@@ -182,7 +182,11 @@ def get_user_calendar(user: str):
             )
             .format("{:,.0%}", subset=pd.IndexSlice[:,cal2.columns[cal2.columns == '%']])
             .highlight_null(color="white")
-            .set_table_styles([{'selector': '.data', 'props': [('text-align', 'center')]}])
+            .set_table_styles([
+                {'selector': '.data', 'props': [('text-align', 'center')]},
+                {'selector': 'td', 'props':[('padding', 'padding: 1px !important')]},
+                {'selector': 'th', 'props':[('padding', 'padding: 1px !important')]}
+            ])
             ).to_html()
         )
         .replace('\n','')
