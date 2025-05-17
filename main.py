@@ -184,8 +184,8 @@ def get_user_calendar(user: str):
             .highlight_null(color="white")
             .set_table_styles([
                 {'selector': '.data', 'props': [('text-align', 'center')]},
-                {'selector': 'td', 'props':[('padding', 'padding: 1px !important')]},
-                {'selector': 'th', 'props':[('padding', 'padding: 1px !important')]}
+                {'selector': 'td', 'props': [('padding', '1px !important')]},
+                {'selector': 'th', 'props': [('padding', '1px !important')]}
             ])
             ).to_html()
         )
